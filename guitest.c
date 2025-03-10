@@ -22,12 +22,11 @@ gboolean update_speed(AppData *data) {
     return TRUE;
 }
 
-gboolean drain_battery(AppData *data) {
-    static double battery = 1.0;
-    battery -= 0.005;
-    if(battery < 0) battery = 0;
-    gtk_progress_bar_set_fraction(data->battery_bar, battery);
-    return (battery > 0);
+gboolean update_battery(AppData *data) {
+    int battery_percent = rand() % 101; // Random between 0-100
+    double fraction = battery_percent / 100.0;
+    gtk_progress_bar_set_fraction(data->battery_bar, fraction);
+    return TRUE; 
 }
 
 void adjust_temp(GtkButton *btn, GtkLabel *label) {
@@ -69,7 +68,7 @@ int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
     srand(time(NULL));
 
-    // Main window
+    // Main window setup
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Lab Dashboard");
     gtk_window_set_default_size(GTK_WINDOW(window), 320, 240);
@@ -79,11 +78,13 @@ int main(int argc, char *argv[]) {
     gtk_grid_set_column_spacing(GTK_GRID(grid), 15);
     gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
 
-    // Vertical battery bar
+    // Battery progress bar
     GtkWidget *battery = gtk_progress_bar_new();
-    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(battery), 0.8);
+    int initial_batt = rand() % 101;
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(battery), initial_batt / 100.0);
     gtk_widget_set_size_request(battery, 30, 200);
     gtk_grid_attach(GTK_GRID(grid), battery, 0, 0, 1, 3);
+    gtk_orientable_set_orientation(GTK_ORIENTABLE(battery), GTK_ORIENTATION_VERTICAL);
 
     // Middle column
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(box), temp_box, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), eff_label, FALSE, FALSE, 0);
 
-    // Create temperature buttons with proper references
+    // Temperature controls
     GtkWidget *minus_btn = gtk_button_new_with_label("-");
     GtkWidget *plus_btn = gtk_button_new_with_label("+");
 
@@ -120,20 +121,23 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(bottom_box), msg_label, TRUE, TRUE, 0);
     gtk_box_pack_end(GTK_BOX(bottom_box), ok_btn, FALSE, FALSE, 0);
 
-    // Styling
+    // CSS Styling
     provider = gtk_css_provider_new();
     gtk_css_provider_load_from_data(provider,
-        "progressbar, progressbar > trough {"
+        "progressbar {"
         "   min-width: 30px;"
         "   min-height: 200px;"
+        "   -gtk-outline-radius: 0px;"
+        "   transform: translateY(100%) scaleY(-1);" 
+        "   transform-origin: bottom;"
+        "}"
+        "progressbar trough {"
+        "   background: #ddd;"
         "   border-radius: 3px;"
         "}"
-        "progressbar > trough {"
-        "   background: #ddd;"
-        "}"
-        "progressbar > trough > progress {"
+        "progressbar progress {"
         "   background: #4CAF50;"
-        "   transform: rotate(75deg);"
+        "   min-height: 100%;"
         "}"
         "#speed-label {"
         "   font-size: 48px;"
@@ -150,23 +154,24 @@ int main(int argc, char *argv[]) {
     gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
         GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-    // Initialize data
+    // Initialize app data
     data->battery_bar = GTK_PROGRESS_BAR(battery);
     data->speed_label = GTK_LABEL(speed_label);
     data->temp_label = GTK_LABEL(temp_label);
     data->crew_msg_label = GTK_LABEL(msg_label);
 
-    // Signals
+    // Connect signals
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(ok_btn, "clicked", G_CALLBACK(on_ok_clicked), msg_label);
     g_signal_connect(minus_btn, "clicked", G_CALLBACK(adjust_temp), temp_label);
     g_signal_connect(plus_btn, "clicked", G_CALLBACK(adjust_temp), temp_label);
 
-    // Timers
+    // Set up timers
     g_timeout_add(1000, (GSourceFunc)update_speed, data);
-    g_timeout_add(500, (GSourceFunc)drain_battery, data);
+    g_timeout_add(500, (GSourceFunc)update_battery, data); 
     g_timeout_add(3000, (GSourceFunc)update_message, data);
 
+    // Show window
     gtk_widget_show_all(window);
     gtk_main();
 
