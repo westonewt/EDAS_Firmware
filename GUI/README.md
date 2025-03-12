@@ -1,6 +1,6 @@
 To download gtk and to be able to run the program, do the following:
 
-1. Update the package list  (optional)
+1. Update the package list  (optional) /n
    **sudo apt update**
 
 3. Install gtk3.0
