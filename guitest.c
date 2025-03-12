@@ -43,11 +43,9 @@ void adjust_temp(GtkButton *btn, GtkLabel *label) {
 
 gboolean update_message(AppData *data) {
     static const char *messages[] = {
-        "System Nominal",
-        "Check Tire Pressure",
-        "Monitor Battery Levels",
+        "You are the leader",
+        "Press the OK button",
         "Efficiency Optimal",
-        "All Systems Go"
     };
     static int idx = 0;
     
