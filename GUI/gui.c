@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Lab Dashboard");
     gtk_window_set_default_size(GTK_WINDOW(window), 320, 240);
+    gtk_window_fullscreen(GTK_WINDOW(window));
 
     grid = gtk_grid_new();
     gtk_container_add(GTK_CONTAINER(window), grid);
