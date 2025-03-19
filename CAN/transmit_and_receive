@@ -3,36 +3,50 @@ import time
 import gpiozero
 import os
 
-button1=gpiozero.Button(19) #activate send
-led1=gpiozero.LED(13) #visual for send
-led2=gpiozero.LED(6) #visual for entering receive
+button1=gpiozero.Button(19)
+led1=gpiozero.LED(13)
+led2=gpiozero.LED(6)
 
 #bring up can0 interface at 500kbps / 2000kbps FD on
 os.system("sudo ip link set can0 up type can bitrate 500000 dbitrate 2000000 fd on")
 time.sleep(0.1)
+print("can0 up")
 
 #initialize can
-bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=True)
-print("1")
+try:
+    bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=True)
+    print("Bus interface connected")
+
+except OSError:
+     print("could not find Bus interface")
+     exit()
+
 #create message
 msg=can.Message(arbitration_id=0x7DF,is_fd=True,bitrate_switch=True,data=[0x02,0x01,0x05]+[0x00]*5,is_extended_id=False)
-print("2")
+print("message valid")
 
-while True:
-    #send
-    if button1==True:
-        bus.send(msg)
-        led1.on()
-        time.sleep(10)
-        led1.off()
-    #recieve
-    else:
-        led2.on()
-        message = bus.recv()
-        c = '{0:f} {1:x} {2:x} {3:x} {4:x} '.format(message.timestamp, message.is_fd,message.bitrate_switch,message.arbitration_id, message.dlc)
-        s=''
-        for i in range(message.dlc):
-            s +=  '{0:x} '.format(message.data[i])
+try:
+    while True:
+         #send
+        if button1==True:
+            bus.send(msg)
+            print("message sent")
+            led1.on()
+            time.sleep(5)
+            led1.off()
+        #recieve
+        else:
+            led2.on()
+            message = bus.recv()
+            c = '{0:f} {1:x} {2:x} {3:x} {4:x} '.format(message.timestamp, message.is_fd,message.bitrate_switch,message.arbitration_id, message.dlc)
+            s=''
+            for i in range(message.dlc):
+                s +=  '{0:x} '.format(message.data[i])
 
             print(' {}'.format(c+s))
-        led2.off()
+            led2.off()        
+    
+except KeyboardInterrupt:
+	#Catch keyboard interrupt
+	os.system("sudo ip link set can0 down")
+	print('\n\rKeyboard interrtupt')
