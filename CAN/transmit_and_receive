@@ -3,14 +3,8 @@ import time
 import gpiozero
 import os
 
-button1=gpiozero.Button(19)
 led1=gpiozero.LED(13)
 led2=gpiozero.LED(6)
-
-#bring up can0 interface at 500kbps / 2000kbps FD on
-os.system("sudo ip link set can0 up type can bitrate 500000 dbitrate 2000000 fd on")
-time.sleep(0.1)
-print("can0 up")
 
 #initialize can
 try:
@@ -22,31 +16,26 @@ except OSError:
      exit()
 
 #create message
-msg=can.Message(arbitration_id=0x7DF,is_fd=True,bitrate_switch=True,data=[0x02,0x01,0x05]+[0x00]*5,is_extended_id=False)
+msg=can.Message(arbitration_id=0x123,data=[0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xAA],is_extended_id=False,is_fd=True)
 print("message valid")
+led1.on()
 
+
+#send
 try:
-    while True:
-         #send
-        if button1==True:
-            bus.send(msg)
-            print("message sent")
-            led1.on()
-            time.sleep(5)
-            led1.off()
-        #recieve
-        else:
-            led2.on()
-            message = bus.recv()
-            c = '{0:f} {1:x} {2:x} {3:x} {4:x} '.format(message.timestamp, message.is_fd,message.bitrate_switch,message.arbitration_id, message.dlc)
-            s=''
-            for i in range(message.dlc):
-                s +=  '{0:x} '.format(message.data[i])
+    bus.send(msg)
+    print(f"message sent {msg}")
+    time.sleep(0.1)
+except can.CanError:
+    print("Error: Message not sent")
 
-            print(' {}'.format(c+s))
-            led2.off()        
+#receive
+mes = bus.recv(timeout=5.0)
+time.sleep(0.1)
+if mes:
+    print(f"message received: {mes}")
+else:
+    print("no message received: ")
+led2.on()      
+time.sleep(5)
     
-except KeyboardInterrupt:
-	#Catch keyboard interrupt
-	os.system("sudo ip link set can0 down")
-	print('\n\rKeyboard interrtupt')
