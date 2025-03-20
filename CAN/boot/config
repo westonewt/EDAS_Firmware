@@ -19,11 +19,13 @@ camera_auto_detect=1
 # Automatically load overlays for detected DSI displays
 display_auto_detect=1
 
-  # change gpio pin high
+# change gpio pins
+gpio=6=op,dl
+gpio=13=op,dl
+gpio=19=ip,pd
 gpio=25=ip,pu
 # set up CAN device 0
 dtoverlay=mcp251xfd,spi0-0,oscillator=8000000,interrupt=16
-ip link set can0 up type can bitrate 500000 dbitrate 2000000 fd on
 
 # Automatically load initramfs files, if found
 auto_initramfs=1
