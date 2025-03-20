@@ -8,4 +8,4 @@ msg=can.Message(arbitration_id=0x7DF,is_fd=True,bitrate_switch=True,data=[0x02,0
 print("2")
 #send
 bus.send(msg)
-print("sent")
+print(f"message sent {msg}")
