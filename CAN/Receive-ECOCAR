@@ -23,7 +23,7 @@ os.system("sudo ip link set can0 up type can bitrate 500000 dbitrate 2000000 fd 
 
 #bring up CAN0 interface
 try:
-    bus1=can.interface.Bus(channel='can0',bustype='socketcan',fd=True)
+    bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=True)
     print("Bus interface connected")
 except:
     print("could not find Bus interface")
@@ -32,7 +32,7 @@ except:
 #loop for receiving messages
 try:
     while True:
-        message = bus1.recv(timeout=10)
+        message = bus.recv(timeout=10)
         time.sleep(0.1)
         if message:
             c = '{0:f} {1:x} {2:x} {3:x} {4:x} '.format(message.timestamp, message.is_fd,message.bitrate_switch,message.arbitration_id, message.dlc)
