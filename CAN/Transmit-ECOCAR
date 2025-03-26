@@ -3,11 +3,11 @@ import time
 import gpiozero
 import os
 
-#set up CAN0 with a bitrate of 500kbps and a data bitrate of 2000kbps
-os.system("sudo ip link set can0 up type can bitrate 500000 dbitrate 2000000 fd on")
+#set up CAN0 with a bitrate of 1000kbps
+os.system("sudo ip link set can0 up type can bitrate 1000000 fd off")
 
 try:
-    bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=True)
+    bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=False)
     print("Bus interface connected")
 
 except OSError:
@@ -15,7 +15,7 @@ except OSError:
      exit()
 
 #create message (change ID to be RF module)
-msg=can.Message(arbitration_id=0x123,data=[0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xAA],is_extended_id=False,is_fd=True)
+msg=can.Message(arbitration_id=0x123,data=[0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xAA],is_extended_id=False,is_fd=False)
 print("message valid")
 
 try:
