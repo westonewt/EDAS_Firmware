@@ -19,11 +19,11 @@ FDCAN_BOOSTPACK2_ID=0x041
 FDCAN_BATTPACK_ID=0x050
 
 #set up CAN0 with a bitrate of 500kbps and a data bitrate of 2000kbps
-os.system("sudo ip link set can0 up type can bitrate 500000 dbitrate 2000000 fd on")
+os.system("sudo ip link set can0 up type can bitrate 1000000 fd off")
 
 #bring up CAN0 interface
 try:
-    bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=True)
+    bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=False)
     print("Bus interface connected")
 except:
     print("could not find Bus interface")
