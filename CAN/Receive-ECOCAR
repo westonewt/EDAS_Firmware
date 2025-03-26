@@ -18,7 +18,7 @@ FDCAN_BOOSTPACK_ID=0x040
 FDCAN_BOOSTPACK2_ID=0x041
 FDCAN_BATTPACK_ID=0x050
 
-#set up CAN0 with a bitrate of 500kbps and a data bitrate of 2000kbps
+#set up CAN0 with a bitrate of 1000kbps
 os.system("sudo ip link set can0 up type can bitrate 1000000 fd off")
 
 #bring up CAN0 interface
