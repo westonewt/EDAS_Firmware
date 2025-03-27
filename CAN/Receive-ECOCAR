@@ -18,12 +18,12 @@ FDCAN_BOOSTPACK_ID=0x040
 FDCAN_BOOSTPACK2_ID=0x041
 FDCAN_BATTPACK_ID=0x050
 
-#set up CAN0 with a bitrate of 1000kbps
+#set up CAN0 with a bitrate of 500kbps and a data bitrate of 2000kbps
 os.system("sudo ip link set can0 up type can bitrate 1000000 fd off")
 
 #bring up CAN0 interface
 try:
-    bus=can.interface.Bus(channel='can0',bustype='socketcan',fd=False)
+    bus1=can.interface.Bus(channel='can0',bustype='socketcan',fd=False)
     print("Bus interface connected")
 except:
     print("could not find Bus interface")
@@ -32,7 +32,7 @@ except:
 #loop for receiving messages
 try:
     while True:
-        message = bus.recv(timeout=10)
+        message = bus1.recv(timeout=10)
         time.sleep(0.1)
         if message:
             c = '{0:f} {1:x} {2:x} {3:x} {4:x} '.format(message.timestamp, message.is_fd,message.bitrate_switch,message.arbitration_id, message.dlc)
@@ -40,68 +40,68 @@ try:
             if message.arbitration_id==0x010:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("FETPACK message:")
-                    print(' {}'.format(c+s))
+                print("FETPACK message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x015:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("RELPACKMTR message:")
-                    print(' {}'.format(c+s))
+                print("RELPACKMTR message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x016:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("RELPACK message:")
-                    print(' {}'.format(c+s))
+                print("RELPACK message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x017:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("RELPACKFC message:")
-                    print(' {}'.format(c+s))
+                print("RELPACKFC message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x020:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("FCCPACK1 message:")
-                    print(' {}'.format(c+s))
+                print("FCCPACK1 message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x021:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("FCCPACK2 message:")
-                    print(' {}'.format(c+s))
+                print("FCCPACK2 message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x022:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("FCCPACK3 message:")
-                    print(' {}'.format(c+s))
+                print("FCCPACK3 message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x030:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("H2_PACK1 message:")
-                    print(' {}'.format(c+s))
+                print("H2_PACK1 message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x031:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("H2_PACK2 message:")
-                    print(' {}'.format(c+s))
+                print("H2_PACK2 message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x032:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("H2_ARM_ALARM message:")
-                    print(' {}'.format(c+s))
+                print("H2_ARM_ALARM message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x040:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("BOOSTPACK message:")
-                    print(' {}'.format(c+s))
+                print("BOOSTPACK message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x041:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("BOOSTPACK2 message:")
-                    print(' {}'.format(c+s))
+                print("BOOSTPACK2 message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x050:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
-                    print("BATTPACK message:")
-                    print(' {}'.format(c+s))
+                print("BATTPACK message:")
+                print(' {}'.format(c+s))
             
         else:
             print("no message received: ")     
