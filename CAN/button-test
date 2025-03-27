@@ -1,13 +1,13 @@
-from gpiozero import button
+from gpiozero import Button
 import os
 
-button1=button(17)
-button2=button(27)
+button1=Button(17)
+button2=Button(27)
 try:
   while True:
     if button1.is_pressed:
       print("button 1 is pressed")
-    if button2.is__pressed:
+    if button2.is_pressed:
       print("button 2 is pressed")
 except KeyboardInterrupt:
     os.system("sudo ip link set can0 down")
