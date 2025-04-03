@@ -4,6 +4,7 @@ import gpiozero
 import os
 
 #ID's for ECOCAR CAN Bus
+H2_ALARM=0x001
 FD_FETPACK_ID=0x010
 FD_RELPACKMTR_ID=0x015
 FDCAN_RELPACK_ID=0x016
@@ -33,10 +34,14 @@ except:
 try:
     while True:
         message = bus1.recv(timeout=10)
-        time.sleep(0.1)
         if message:
             c = '{0:f} {1:x} {2:x} {3:x} {4:x} '.format(message.timestamp, message.is_fd,message.bitrate_switch,message.arbitration_id, message.dlc)
             s=''
+            if message.arbitration_id==0x001:
+                for i in range(message.dlc ):
+                    s +=  '{0:x} '.format(message.data[i])
+                print("H2_ALARM message:")
+                print(' {}'.format(c+s))
             if message.arbitration_id==0x010:
                 for i in range(message.dlc ):
                     s +=  '{0:x} '.format(message.data[i])
