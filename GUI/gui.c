@@ -8,14 +8,24 @@ typedef struct {
     GtkLabel *speed_label;
     GtkLabel *temp_label;
     GtkLabel *crew_msg_label;
+    GtkLabel *lap_label;
+    GtkLabel *battery_label; // Added battery label
 } AppData;
 
-int get_random_speed() {
+int get_speed() {
     return (rand() % 51) + 10; // 10-60 km/h
 }
 
+int get_battery() {
+    return (rand() % 100); // 0-100%
+}
+
+int get_lap_number() {
+    return (rand() % 5); // 0-5
+}
+
 gboolean update_speed(AppData *data) {
-    int speed = get_random_speed();
+    int speed = get_speed();
     char speed_text[32];
     snprintf(speed_text, sizeof(speed_text), "%d km/h", speed);
     gtk_label_set_text(data->speed_label, speed_text);
@@ -23,10 +33,22 @@ gboolean update_speed(AppData *data) {
 }
 
 gboolean update_battery(AppData *data) {
-    int battery_percent = rand() % 101; // Random between 0-100
+    int battery_percent = 100 - get_battery(); // Reverse logic, get battery of 25 displays 75 on the gui
     double fraction = battery_percent / 100.0;
     gtk_progress_bar_set_fraction(data->battery_bar, fraction);
+    
+    char batt_text[32];
+    snprintf(batt_text, sizeof(batt_text), "%d%%", 100 - battery_percent); // Go back to actual to display
+    gtk_label_set_text(data->battery_label, batt_text);
     return TRUE; 
+}
+
+gboolean update_lap_number(AppData *data) {
+    int lap = get_lap_number();
+    char lap_text[32];
+    snprintf(lap_text, sizeof(lap_text), "#%d", lap);
+    gtk_label_set_text(data->lap_label, lap_text);
+    return TRUE;
 }
 
 void adjust_temp(GtkButton *btn, GtkLabel *label) {
@@ -79,7 +101,7 @@ int main(int argc, char *argv[]) {
 
     // Battery progress bar
     GtkWidget *battery = gtk_progress_bar_new();
-    int initial_batt = rand() % 101;
+    int initial_batt = 100 - get_battery();
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(battery), initial_batt / 100.0);
     gtk_widget_set_size_request(battery, 30, 200);
     gtk_grid_attach(GTK_GRID(grid), battery, 0, 0, 1, 3);
@@ -89,7 +111,11 @@ int main(int argc, char *argv[]) {
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_grid_attach(GTK_GRID(grid), box, 1, 0, 1, 1);
 
-    GtkWidget *lab_num = gtk_label_new("#2");
+    // Lap number label with dynamic initialization
+    char lap_str[32];
+    snprintf(lap_str, sizeof(lap_str), "#%d", get_lap_number());
+    GtkWidget *lab_num = gtk_label_new(lap_str);
+    
     GtkWidget *temp_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     GtkWidget *temp_label = gtk_label_new("25°C");
     GtkWidget *eff_label = gtk_label_new("75% Efficiency");
@@ -106,10 +132,20 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(temp_box), temp_label, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(temp_box), plus_btn, FALSE, FALSE, 0);
 
+    // Right column (speed and battery percentage)
+    GtkWidget *col2_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_grid_attach(GTK_GRID(grid), col2_box, 2, 0, 1, 1);
+
+    // Battery percentage label
+    GtkWidget *battery_percent_label = gtk_label_new("");
+    gtk_widget_set_halign(battery_percent_label, GTK_ALIGN_END);
+    gtk_widget_set_valign(battery_percent_label, GTK_ALIGN_START);
+    gtk_box_pack_start(GTK_BOX(col2_box), battery_percent_label, FALSE, FALSE, 0);
+
     // Speed display
-    GtkWidget *speed_label = gtk_label_new("50 km/h");
+    GtkWidget *speed_label = gtk_label_new("0 km/h");
     gtk_widget_set_name(speed_label, "speed-label");
-    gtk_grid_attach(GTK_GRID(grid), speed_label, 2, 0, 1, 1);
+    gtk_box_pack_start(GTK_BOX(col2_box), speed_label, FALSE, FALSE, 0);
 
     // Bottom section
     GtkWidget *bottom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
@@ -160,6 +196,8 @@ int main(int argc, char *argv[]) {
     data->speed_label = GTK_LABEL(speed_label);
     data->temp_label = GTK_LABEL(temp_label);
     data->crew_msg_label = GTK_LABEL(msg_label);
+    data->lap_label = GTK_LABEL(lab_num);
+    data->battery_label = GTK_LABEL(battery_percent_label); // Initialize battery label
 
     // Connect signals
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
@@ -169,8 +207,9 @@ int main(int argc, char *argv[]) {
 
     // Set up timers
     g_timeout_add(1000, (GSourceFunc)update_speed, data);
-    g_timeout_add(500, (GSourceFunc)update_battery, data); 
+    g_timeout_add(500, (GSourceFunc)update_battery, data);
     g_timeout_add(3000, (GSourceFunc)update_message, data);
+    g_timeout_add(1000, (GSourceFunc)update_lap_number, data);
 
     // Show window
     gtk_widget_show_all(window);
