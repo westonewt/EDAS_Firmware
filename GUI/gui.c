@@ -9,19 +9,22 @@ typedef struct {
     GtkLabel *temp_label;
     GtkLabel *crew_msg_label;
     GtkLabel *lap_label;
-    GtkLabel *battery_label; // Added battery label
+    GtkLabel *battery_label;
 } AppData;
 
 int get_speed() {
-    return (rand() % 51) + 10; // 10-60 km/h
+    return 75;
+    // return (rand() % 50) + 10; // 10-60 km/h
 }
 
 int get_battery() {
-    return (rand() % 100); // 0-100%
+    return 50;
+    // return (rand() % 99); // 0-100%
 }
 
 int get_lap_number() {
-    return (rand() % 5); // 0-5
+    return 2;
+    // return (rand() % 5); // 0-5
 }
 
 gboolean update_speed(AppData *data) {
@@ -65,9 +68,11 @@ void adjust_temp(GtkButton *btn, GtkLabel *label) {
 
 gboolean update_message(AppData *data) {
     static const char *messages[] = {
-        "You are the leader",
+        "You are the leaderYou are the leaderYou are the leaderYou are the leaderYou are the leaderYou are the leader",
         "Press the OK button",
         "Efficiency Optimal",
+        "a",
+        "b"
     };
     static int idx = 0;
     
@@ -197,7 +202,7 @@ int main(int argc, char *argv[]) {
     data->temp_label = GTK_LABEL(temp_label);
     data->crew_msg_label = GTK_LABEL(msg_label);
     data->lap_label = GTK_LABEL(lab_num);
-    data->battery_label = GTK_LABEL(battery_percent_label); // Initialize battery label
+    data->battery_label = GTK_LABEL(battery_percent_label);
 
     // Connect signals
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
