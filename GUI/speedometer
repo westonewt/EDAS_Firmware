@@ -1,0 +1,125 @@
+#include <gtk/gtk.h>
+#include <math.h>
+
+#define MAX_SPEED 100
+#define UPDATE_INTERVAL 50  // ms
+
+typedef struct {
+    GtkWidget *drawing_area;
+    GtkWidget *label;
+    gdouble current_speed;
+} Speedometer;
+
+static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
+    Speedometer *speedo = (Speedometer *)data;
+    GtkAllocation allocation;
+    gtk_widget_get_allocation(widget, &allocation);
+    
+    gint width = allocation.width;
+    gint height = allocation.height;
+    gint center_x = width / 2;
+    gint center_y = height / 2;
+    gint radius = MIN(width, height) * 0.4;
+
+    // Draw background
+    cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
+    cairo_paint(cr);
+
+    // Draw dial (top semicircle)
+    cairo_set_source_rgb(cr, 0.8, 0.8, 0.8);
+    cairo_set_line_width(cr, 2);
+    cairo_arc(cr, center_x, center_y, radius, -M_PI, 0);
+    cairo_stroke(cr);
+
+    // Draw markers and labels
+    for (int i = 0; i <= MAX_SPEED; i += 10) {
+        double angle = (i / (double)MAX_SPEED) * M_PI - M_PI;
+        cairo_save(cr);
+        cairo_translate(cr, center_x, center_y);
+        cairo_rotate(cr, angle); 
+        
+        // Draw marker
+        cairo_move_to(cr, radius * 0.85, 0);
+        cairo_line_to(cr, radius * 0.95, 0);
+        cairo_stroke(cr);
+        
+        // Draw labels every 20 units
+        if (i % 20 == 0) {
+            cairo_save(cr);
+            cairo_translate(cr, radius * 0.75, 0);
+            cairo_rotate(cr, -angle);
+            
+            cairo_set_font_size(cr, 12);
+            cairo_set_source_rgb(cr, 1, 1, 1);
+            cairo_text_extents_t extents;
+            char *text = g_strdup_printf("%d", i);
+            cairo_text_extents(cr, text, &extents);
+            cairo_move_to(cr, -extents.width/2, extents.height/2);
+            cairo_show_text(cr, text);
+            g_free(text);
+            cairo_restore(cr);
+        }
+        cairo_restore(cr);
+    }
+
+    // Draw needle
+    double needle_angle = (speedo->current_speed / MAX_SPEED) * M_PI - M_PI;
+    cairo_save(cr);
+    cairo_translate(cr, center_x, center_y);
+    cairo_rotate(cr, needle_angle);
+    
+    cairo_set_source_rgb(cr, 1, 0, 0);
+    cairo_set_line_width(cr, 3);
+    cairo_move_to(cr, -radius*0.1, 0);
+    cairo_line_to(cr, radius * 0.85, 0);
+    cairo_stroke(cr);
+    cairo_restore(cr);
+
+    return FALSE;
+}
+
+static gboolean update_speed(gpointer data) {
+    Speedometer *speedo = (Speedometer *)data;
+    static gdouble t = 0;
+    
+    // Simulated speed (replace with real data source)
+    speedo->current_speed = fabs(sin(t) * MAX_SPEED);
+    t += 0.1;
+    
+    // Update label
+    gtk_label_set_text(GTK_LABEL(speedo->label), 
+        g_strdup_printf("Speed: %.1f km/h", speedo->current_speed));
+    
+    gtk_widget_queue_draw(speedo->drawing_area);
+    return G_SOURCE_CONTINUE;
+}
+
+int main(int argc, char *argv[]) {
+    GtkWidget *window, *box;
+    Speedometer speedo = {0};
+
+    gtk_init(&argc, &argv);
+
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window), "GTK Speedometer");
+    gtk_window_set_default_size(GTK_WINDOW(window), 500, 300);
+    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_container_add(GTK_CONTAINER(window), box);
+
+    speedo.drawing_area = gtk_drawing_area_new();
+    gtk_widget_set_size_request(speedo.drawing_area, 400, 250);
+    g_signal_connect(speedo.drawing_area, "draw", G_CALLBACK(on_draw), &speedo);
+    gtk_box_pack_start(GTK_BOX(box), speedo.drawing_area, TRUE, TRUE, 0);
+
+    speedo.label = gtk_label_new("Speed: 0.0 km/h");
+    gtk_box_pack_start(GTK_BOX(box), speedo.label, FALSE, FALSE, 0);
+
+    g_timeout_add(UPDATE_INTERVAL, update_speed, &speedo);
+
+    gtk_widget_show_all(window);
+    gtk_main();
+
+    return 0;
+}
