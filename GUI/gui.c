@@ -1,3 +1,16 @@
+/*******************************************************
+ * ECOCAR DRIVER ASSIST SYSTEM GUI
+ * -----------------------------------------------------
+ * Receives and displays real-time data:
+ *   - Speed
+ *   - Battery Level
+ *   - Lap Number
+ *   - Cabin Temperature
+ *   - Current Fuel Efficiency
+ *   - Average Fuel Efficiency
+ *   - Crew Message to Driver
+ *******************************************************/
+
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include <stdlib.h>
@@ -7,7 +20,7 @@
 
 #define MAX_EFFICIENCY 100
 #define UPDATE_INTERVAL 50
-#define GUI_SCALE_FACTOR 1.2 // Added scaling factor
+#define GUI_SCALE_FACTOR 1.7 // Added scaling factor
 
 typedef struct {
     GtkWidget *drawing_area;
@@ -35,6 +48,10 @@ static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data);
 int get_speed() { return 75; }
 int get_battery() { return 50; }
 int get_lap_number() { return 2; }
+int get_temperature() { return 25; }
+float get_current_fuel_efficiency() { return 50; }
+float get_average_fuel_efficiency() { return 60; }
+const char* get_crew_message() { return "You are the leader!"; }
 
 gboolean update_speed(AppData *data) {
     char speed_text[32];
@@ -63,7 +80,7 @@ gboolean update_lap_number(AppData *data) {
 }
 
 void adjust_temp(GtkButton *btn, GtkLabel *label) {
-    static int temp = 25;
+    int temp = get_temperature();
     const gchar *lbl = gtk_button_get_label(btn);
     temp += (strcmp(lbl, "+") == 0) ? 1 : -1;
     temp = (temp < 0) ? 0 : temp;
@@ -73,14 +90,10 @@ void adjust_temp(GtkButton *btn, GtkLabel *label) {
     gtk_label_set_text(label, temp_text);
 }
 
+// Updates the message box
 gboolean update_message(AppData *data) {
-    static const char *messages[] = {
-        "You are the leader", "Press the OK button",
-        "Efficiency Optimal", "a", "b"
-    };
-    static int idx = 0;
-    gtk_label_set_text(data->crew_msg_label, messages[idx]);
-    idx = (idx + 1) % 5;
+    const char *message = get_crew_message();
+    gtk_label_set_text(data->crew_msg_label, message);
     return TRUE;
 }
 
@@ -88,6 +101,7 @@ void on_ok_clicked(GtkButton *btn, GtkLabel *msg_label) {
     gtk_label_set_text(msg_label, "Acknowledged");
 }
 
+// The battery icon
 static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data) {
     int width = gtk_widget_get_allocated_width(widget);
     int height = gtk_widget_get_allocated_height(widget);
@@ -132,6 +146,7 @@ static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data) {
     return FALSE;
 }
 
+// Efficiency Meter
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
     EfficiencyMeter *meter = (EfficiencyMeter *)data;
     GtkAllocation allocation;
@@ -205,11 +220,9 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
 
 static gboolean update_efficiency(gpointer data) {
     EfficiencyMeter *meter = (EfficiencyMeter *)data;
-    static gdouble t = 0;
 
-    meter->current_efficiency = fabs(sin(t) * MAX_EFFICIENCY);
-    meter->average_efficiency = meter->average_efficiency * 0.9 + meter->current_efficiency * 0.1;
-    t += 0.1;
+    meter->current_efficiency = get_current_fuel_efficiency();
+    meter->average_efficiency = get_average_fuel_efficiency();
 
     // Update efficiency labels
     char current_text[32], average_text[32];
