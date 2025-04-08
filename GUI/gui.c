@@ -1,3 +1,18 @@
+/*******************************************************
+ * ECOCAR DRIVER ASSIST SYSTEM GUI
+ * -----------------------------------------------------
+ * Receives and displays real-time  data:
+ *   - Speed
+ *   - Battery Level
+ *   - Lap Number
+ *   - Cabin Temperature
+ *   - Current Fuel Efficiency
+ *   - Average Fuel Efficiency
+ *   - Crew Message to Driver
+ *******************************************************/
+
+
+
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include <stdlib.h>
@@ -6,8 +21,7 @@
 #include <math.h>
 
 #define MAX_EFFICIENCY 100
-#define UPDATE_INTERVAL 50
-#define GUI_SCALE_FACTOR 1.2
+#define UPDATE_INTERVAL 50 
 
 typedef struct {
     GtkWidget *drawing_area;
@@ -35,6 +49,10 @@ static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data);
 int get_speed() { return 75; }
 int get_battery() { return 50; }
 int get_lap_number() { return 2; }
+int get_temperature() { return 25; }
+float get_current_fuel_efficiency() {return 50; }
+float get_average_fuel_efficiency() {return 60; }
+const char* get_crew_message() {return "You are the leader!"; }
 
 gboolean update_speed(AppData *data) {
     char speed_text[32];
@@ -46,13 +64,13 @@ gboolean update_speed(AppData *data) {
 gboolean update_battery(AppData *data) {
     int raw_battery = get_battery();
     data->battery_percent = 100 - raw_battery;
-
+    
     char batt_text[32];
     snprintf(batt_text, sizeof(batt_text), "%d%%", raw_battery);
     gtk_label_set_text(data->battery_label, batt_text);
-
+    
     gtk_widget_queue_draw(data->battery_da);
-    return TRUE;
+    return TRUE; 
 }
 
 gboolean update_lap_number(AppData *data) {
@@ -62,25 +80,22 @@ gboolean update_lap_number(AppData *data) {
     return TRUE;
 }
 
+
 void adjust_temp(GtkButton *btn, GtkLabel *label) {
-    static int temp = 25;
+    int temp = get_temperature();
     const gchar *lbl = gtk_button_get_label(btn);
     temp += (strcmp(lbl, "+") == 0) ? 1 : -1;
     temp = (temp < 0) ? 0 : temp;
-
+    
     char temp_text[16];
     snprintf(temp_text, sizeof(temp_text), "%d°C", temp);
     gtk_label_set_text(label, temp_text);
 }
 
+// Updates the message box
 gboolean update_message(AppData *data) {
-    static const char *messages[] = {
-        "You are the leader", "Press the OK button",
-        "Efficiency Optimal", "a", "b"
-    };
-    static int idx = 0;
-    gtk_label_set_text(data->crew_msg_label, messages[idx]);
-    idx = (idx + 1) % 5;
+    const char *message = get_crew_message();
+    gtk_label_set_text(data->crew_msg_label, message);
     return TRUE;
 }
 
@@ -88,15 +103,16 @@ void on_ok_clicked(GtkButton *btn, GtkLabel *msg_label) {
     gtk_label_set_text(msg_label, "Acknowledged");
 }
 
+// The battery icon
 static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data) {
     int width = gtk_widget_get_allocated_width(widget);
     int height = gtk_widget_get_allocated_height(widget);
-
-    int battery_width = 40 * GUI_SCALE_FACTOR;
-    int battery_height = 200 * GUI_SCALE_FACTOR;
-    int tip_width = 15 * GUI_SCALE_FACTOR;
-    int tip_height = 5 * GUI_SCALE_FACTOR;
-
+    
+    int battery_width = 40;
+    int battery_height = 200;
+    int tip_width = 15;
+    int tip_height = 5;
+    
     int x = (width - battery_width) / 2;
     int y = (height - battery_height - tip_height) / 2;
 
@@ -109,12 +125,12 @@ static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data) {
     y += tip_height;
     cairo_rectangle(cr, x, y, battery_width, battery_height);
     cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
-    cairo_set_line_width(cr, 2 * GUI_SCALE_FACTOR);
+    cairo_set_line_width(cr, 2);
     cairo_stroke(cr);
 
     // Battery fill
     double fill_height = battery_height * (data->battery_percent / 100.0);
-
+    
     if(data->battery_percent > 50) {
         cairo_set_source_rgb(cr, 0.2, 0.7, 0.2);
     } else if(data->battery_percent > 20) {
@@ -123,20 +139,19 @@ static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data) {
         cairo_set_source_rgb(cr, 1.0, 0.2, 0.2);
     }
 
-    cairo_rectangle(cr, x + 2 * GUI_SCALE_FACTOR,
-                   y + battery_height - fill_height + 2 * GUI_SCALE_FACTOR,
-                   battery_width - 4 * GUI_SCALE_FACTOR,
-                   fill_height - 4 * GUI_SCALE_FACTOR);
+    cairo_rectangle(cr, x + 2, y + battery_height - fill_height + 2, 
+                   battery_width - 4, fill_height - 4);
     cairo_fill(cr);
 
     return FALSE;
 }
 
+// Efficiency Meter
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
     EfficiencyMeter *meter = (EfficiencyMeter *)data;
     GtkAllocation allocation;
     gtk_widget_get_allocation(widget, &allocation);
-
+    
     gint width = allocation.width;
     gint height = allocation.height;
     gint center_x = width / 2;
@@ -148,7 +163,7 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
 
     // Draw efficiency meter
     cairo_set_source_rgb(cr, 0.3, 0.3, 0.3);
-    cairo_set_line_width(cr, 2 * GUI_SCALE_FACTOR);
+    cairo_set_line_width(cr, 2);
     cairo_arc(cr, center_x, center_y, radius, -M_PI, 0);
     cairo_stroke(cr);
 
@@ -160,12 +175,12 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
         cairo_move_to(cr, radius * 0.85, 0);
         cairo_line_to(cr, radius * 0.95, 0);
         cairo_stroke(cr);
-
+        
         if (i % 20 == 0) {
             cairo_save(cr);
             cairo_translate(cr, radius * 0.75, 0);
             cairo_rotate(cr, -angle);
-            cairo_set_font_size(cr, 12 * GUI_SCALE_FACTOR);
+            cairo_set_font_size(cr, 12);
             cairo_set_source_rgb(cr, 0, 0, 0);
             cairo_text_extents_t extents;
             char *text = g_strdup_printf("%d", i);
@@ -183,7 +198,7 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
     cairo_translate(cr, center_x, center_y);
     cairo_rotate(cr, avg_needle_angle);
     cairo_set_source_rgb(cr, 0, 0.7, 0);
-    cairo_set_line_width(cr, 3 * GUI_SCALE_FACTOR);
+    cairo_set_line_width(cr, 3);
     cairo_move_to(cr, -radius*0.1, 0);
     cairo_line_to(cr, radius * 0.75, 0);
     cairo_stroke(cr);
@@ -194,7 +209,7 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
     cairo_translate(cr, center_x, center_y);
     cairo_rotate(cr, needle_angle);
     cairo_set_source_rgb(cr, 1, 0, 0);
-    cairo_set_line_width(cr, 3 * GUI_SCALE_FACTOR);
+    cairo_set_line_width(cr, 3);
     cairo_move_to(cr, -radius*0.1, 0);
     cairo_line_to(cr, radius * 0.85, 0);
     cairo_stroke(cr);
@@ -205,19 +220,17 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
 
 static gboolean update_efficiency(gpointer data) {
     EfficiencyMeter *meter = (EfficiencyMeter *)data;
-    static gdouble t = 0;
-
-    meter->current_efficiency = fabs(sin(t) * MAX_EFFICIENCY);
-    meter->average_efficiency = meter->average_efficiency * 0.9 + meter->current_efficiency * 0.1;
-    t += 0.1;
-
+    
+    meter->current_efficiency = get_current_fuel_efficiency();
+    meter->average_efficiency = get_average_fuel_efficiency();
+    
     // Update efficiency labels
     char current_text[32], average_text[32];
     snprintf(current_text, sizeof(current_text), "Current: %.1f%%", meter->current_efficiency);
     snprintf(average_text, sizeof(average_text), "Average: %.1f%%", meter->average_efficiency);
     gtk_label_set_text(meter->current_label, current_text);
     gtk_label_set_text(meter->average_label, average_text);
-
+    
     gtk_widget_queue_draw(meter->drawing_area);
     return G_SOURCE_CONTINUE;
 }
@@ -232,33 +245,31 @@ int main(int argc, char *argv[]) {
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Lab Dashboard");
-    gtk_window_set_default_size(GTK_WINDOW(window), 320 * GUI_SCALE_FACTOR, 240 * GUI_SCALE_FACTOR);
+    gtk_window_set_default_size(GTK_WINDOW(window), 320, 240);
     gtk_window_fullscreen(GTK_WINDOW(window));
 
     grid = gtk_grid_new();
     gtk_container_add(GTK_CONTAINER(window), grid);
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 15 * GUI_SCALE_FACTOR);
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 10 * GUI_SCALE_FACTOR);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 15);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
 
     // Battery drawing area
     GtkWidget *battery_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(battery_da, 40 * GUI_SCALE_FACTOR, 100 * GUI_SCALE_FACTOR);
+    gtk_widget_set_size_request(battery_da, 40, 100);
     gtk_grid_attach(GTK_GRID(grid), battery_da, 0, 0, 1, 3);
 
-    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5 * GUI_SCALE_FACTOR);
+    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_grid_attach(GTK_GRID(grid), box, 1, 0, 1, 1);
 
     char lap_str[32];
     snprintf(lap_str, sizeof(lap_str), "#%d", get_lap_number());
     GtkWidget *lab_num = gtk_label_new(lap_str);
-
-    GtkWidget *temp_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5 * GUI_SCALE_FACTOR);
+    
+    GtkWidget *temp_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     GtkWidget *temp_label = gtk_label_new("25°C");
 
     GtkWidget *efficiency_drawing_area = gtk_drawing_area_new();
-    gtk_widget_set_size_request(efficiency_drawing_area,
-                               150 * GUI_SCALE_FACTOR,
-                               150 * GUI_SCALE_FACTOR);
+    gtk_widget_set_size_request(efficiency_drawing_area, 150, 150);
 
     gtk_box_pack_start(GTK_BOX(box), lab_num, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), temp_box, FALSE, FALSE, 0);
@@ -271,7 +282,7 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(temp_box), temp_label, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(temp_box), plus_btn, FALSE, FALSE, 0);
 
-    GtkWidget *col2_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5 * GUI_SCALE_FACTOR);
+    GtkWidget *col2_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_grid_attach(GTK_GRID(grid), col2_box, 2, 0, 1, 1);
 
     // Battery percentage label
@@ -293,7 +304,7 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(col2_box), current_eff_label, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(col2_box), average_eff_label, FALSE, FALSE, 0);
 
-    GtkWidget *bottom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10 * GUI_SCALE_FACTOR);
+    GtkWidget *bottom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_grid_attach(GTK_GRID(grid), bottom_box, 0, 3, 3, 1);
 
     GtkWidget *msg_label = gtk_label_new("Crew Message");
@@ -302,21 +313,13 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_end(GTK_BOX(bottom_box), ok_btn, FALSE, FALSE, 0);
 
     provider = gtk_css_provider_new();
-    gchar *css = g_strdup_printf(
+    gtk_css_provider_load_from_data(provider,
         "grid, window { background-color: white; }"
-        "#speed-label { font-size: %dpx; font-weight: bold; margin: %dpx; }"
-        "label { margin: %dpx; }"
-        "button { padding: %dpx %dpx; }"
+        "#speed-label { font-size: 48px; font-weight: bold; margin: 20px; }"
+        "label { margin: 5px; }"
+        "button { padding: 5px 15px; }"
         "#current-eff-label { color: red; font-weight: bold; }"
-        "#average-eff-label { color: green; font-weight: bold; }",
-        (int)(48 * GUI_SCALE_FACTOR),
-        (int)(20 * GUI_SCALE_FACTOR),
-        (int)(5 * GUI_SCALE_FACTOR),
-        (int)(5 * GUI_SCALE_FACTOR),
-        (int)(15 * GUI_SCALE_FACTOR));
-
-    gtk_css_provider_load_from_data(provider, css, -1, NULL);
-    g_free(css);
+        "#average-eff-label { color: green; font-weight: bold; }", -1, NULL);
 
     gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
         GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
