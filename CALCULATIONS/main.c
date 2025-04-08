@@ -22,25 +22,25 @@ uint32_t fan_RPM;
 
 /*-----------------Main Program---------------*/
 int main()
-{   
+{
     // Bringing in CAN Bus raw data
-    
+
 
     // Organize data
-    for (int i = 0, )
+    // for (int i = 0, )
 
     // Identify data
 
 
     // Sort Data
-    
+
 
     // Calculate efficiency - instant and running average
     Fuel_Eff = fuel_efficiency(speed1, speed2, fuel1, fuel2, time1, time2, PreCal_FEff, inst_FEff, data_Fcnt);
     Elec_Eff = elec_efficiency(mtr_volt, mtr_curr, fc_volt, fc_curr, fc_joules, time1, time2, PreCal_EEff, instant_EEff, data_Ecnt);
 
     // Controlling driver fan
-    fan_RPM = 
+    // fan_RPM =
 
     // Storing data into file
     FILE* efw;
