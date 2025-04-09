@@ -39,11 +39,14 @@ typedef struct {
     EfficiencyMeter efficiency_meter;
     int battery_percent;
     GtkWidget *battery_da;
+    int current_temp;
+    guint temp_timeout_id; // Added to track temperature revert timeout
 } AppData;
 
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data);
 static gboolean update_efficiency(gpointer data);
 static gboolean draw_battery(GtkWidget *widget, cairo_t *cr, AppData *data);
+static gboolean temp_timeout_callback(gpointer user_data); // Added timeout callback
 
 int get_speed() { return 75; }
 int get_battery() { return 50; }
@@ -99,15 +102,38 @@ gboolean update_lap_number(AppData *data) {
     return TRUE;
 }
 
-void adjust_temp(GtkButton *btn, GtkLabel *label) {
-    int temp = get_temperature();
+void adjust_temp(GtkButton *btn, gpointer user_data) {
+    AppData *data = (AppData *)user_data;
     const gchar *lbl = gtk_button_get_label(btn);
-    temp += (strcmp(lbl, "+") == 0) ? 1 : -1;
-    temp = (temp < 0) ? 0 : temp;
+    data->current_temp += (strcmp(lbl, "+") == 0) ? 1 : -1;
+    data->current_temp = (data->current_temp < 0) ? 0 : data->current_temp;
 
     char temp_text[16];
-    snprintf(temp_text, sizeof(temp_text), "%d°C", temp);
-    gtk_label_set_text(label, temp_text);
+    snprintf(temp_text, sizeof(temp_text), "%d°C", data->current_temp);
+    gtk_label_set_text(data->temp_label, temp_text);
+
+    // Cancel previous timeout if any
+    if (data->temp_timeout_id != 0) {
+        g_source_remove(data->temp_timeout_id);
+        data->temp_timeout_id = 0;
+    }
+
+    // Set new timeout to revert temperature
+    data->temp_timeout_id = g_timeout_add_seconds(5, temp_timeout_callback, data);
+}
+
+static gboolean temp_timeout_callback(gpointer user_data) {
+    AppData *data = (AppData *)user_data;
+
+    int current_temp = get_temperature();
+    data->current_temp = current_temp;
+
+    char temp_text[16];
+    snprintf(temp_text, sizeof(temp_text), "%d°C", current_temp);
+    gtk_label_set_text(data->temp_label, temp_text);
+
+    data->temp_timeout_id = 0; // Reset timeout ID
+    return G_SOURCE_REMOVE; // Ensure the timeout is removed
 }
 
 // Updates the message box
@@ -364,11 +390,13 @@ int main(int argc, char *argv[]) {
     data->efficiency_meter.average_label = GTK_LABEL(average_eff_label);
     data->battery_da = battery_da;
     data->battery_percent = 100 - get_battery();
+    data->current_temp = get_temperature();
+    data->temp_timeout_id = 0; // Initialize timeout ID
 
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(ok_btn, "clicked", G_CALLBACK(on_ok_clicked), msg_label);
-    g_signal_connect(minus_btn, "clicked", G_CALLBACK(adjust_temp), temp_label);
-    g_signal_connect(plus_btn, "clicked", G_CALLBACK(adjust_temp), temp_label);
+    g_signal_connect(minus_btn, "clicked", G_CALLBACK(adjust_temp), data);
+    g_signal_connect(plus_btn, "clicked", G_CALLBACK(adjust_temp), data);
     g_signal_connect(efficiency_drawing_area, "draw", G_CALLBACK(on_draw), &data->efficiency_meter);
     g_signal_connect(battery_da, "draw", G_CALLBACK(draw_battery), data);
 
