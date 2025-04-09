@@ -1,0 +1,18 @@
+[Unit]
+Description=EDAS GUI Autostart Service
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+ExecStartPre=/bin/bash -c "for i in {1..15}; do if xset -q >/dev/null 2>&1; then echo 'X server ready'; exit 0; else echo 'X server not ready, retry $i'; sleep 1; fi; done; echo >
+ExecStart=/home/edas/EDAS_Firmware/GUI/gui
+WorkingDirectory=/home/edas/EDAS_Firmware/GUI
+Restart=on-failure
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/edas/.Xauthority
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=20
+
+[Install]
+WantedBy=default.target
