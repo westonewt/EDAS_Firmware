@@ -53,6 +53,26 @@ float get_current_fuel_efficiency() { return 50; }
 float get_average_fuel_efficiency() { return 60; }
 const char* get_crew_message() { return "You are the leader!"; }
 
+void hide_cursor(GtkWidget *widget) {
+    GdkWindow *gdk_window = gtk_widget_get_window(widget);
+
+    // Create a blank pixmap for the invisible cursor
+    GdkDisplay *display = gdk_window_get_display(gdk_window);
+    GdkCursor *invisible_cursor;
+
+    // Create a 1x1 transparent pixbuf
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
+    invisible_cursor = gdk_cursor_new_from_surface(display, surface, 0, 0);
+    cairo_surface_destroy(surface);
+
+    // Set the cursor
+    gdk_window_set_cursor(gdk_window, invisible_cursor);
+    g_object_unref(invisible_cursor);
+
+    if (!gdk_window)
+        return;
+}
+
 gboolean update_speed(AppData *data) {
     char speed_text[32];
     snprintf(speed_text, sizeof(speed_text), "%d km/h", get_speed());
@@ -358,6 +378,7 @@ int main(int argc, char *argv[]) {
     g_timeout_add(1000, (GSourceFunc)update_lap_number, data);
     g_timeout_add(UPDATE_INTERVAL, update_efficiency, &data->efficiency_meter);
 
+    g_signal_connect(window, "realize", G_CALLBACK(hide_cursor), NULL);
     gtk_widget_show_all(window);
     gtk_main();
 
