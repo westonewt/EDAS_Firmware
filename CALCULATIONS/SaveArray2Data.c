@@ -6,11 +6,10 @@
 // to write other data, add more choice values
 /* ---------------------------------------------------------------------------- */
 #include <stdio.h>
-
-
+#include "typedefs.h"
 
 // main function
-void saveArray2File (int choice, float *array,int arr_size, int data_points)
+void saveArray2File (int choice, dataStruct speedVal[], float *array,int arr_size, int data_points)
 {
     FILE *fp;
 
@@ -18,7 +17,6 @@ void saveArray2File (int choice, float *array,int arr_size, int data_points)
     if (choice == 1)
     {
         fp = fopen("Elec_Eff.csv", "w");
-        
     } else if (choice == 2) {
         fp = fopen("Fuel_Eff.csv", "w");
     } else {
@@ -36,7 +34,7 @@ void saveArray2File (int choice, float *array,int arr_size, int data_points)
     for (int i = 0; i < arr_size; i++)
     {
         for (int j = 0; j < data_points; j++)
-            fprintf(fp, "%d,%0.3f,%0.3f\n", *(arr + i * cols + j));
+            fprintf(fp, "%d,%0.3f,%0.3f\n");
         }
     }
     
