@@ -2,43 +2,47 @@
 // IncomingDATA is the pointer pointing to where the data is 
 #include <stdio.h>
 #include <stdint.h>
+#include "typedefs.h"
 
-void CAN_sort(  uint32_t timeD, uint32_t *IncomingDATA, ExtractedDATA *CANdata, 
-                uint32_t *mtrV_time, uint32_t *mtr_volt, uint32_t *mtr_curr, uint32_t *mtrC_time,
-                uint32_t *fcE_time, uint32_t *fc_joules, uint32_t *fcV_time, uint32_t *fcI_time,
+void CAN_sort(  float timeD, uint32_t *IncomingDATA, 
+                float *mtrV_time, uint32_t *mtr_volt, uint32_t *mtr_curr, float *mtrC_time,
+                float *fcE_time, uint32_t *fc_joules, float *fcV_time, float *fcI_time,
                 uint32_t *fc_volt, uint32_t *fc_curr, uint32_t *drv_temp, uint32_t *drv_humd,
-                uint32_t *SpeedVal, int *H2_Alarm)
+                rData *SpeedVal, int *H2_Alarm)
 {    
+    uint32_t identifier;
     // Assumming CAN 2.0A standard thus 11 bit identifier
     // "identifier" is 2 array uint8_t
-    CANdata -> identifier = ((IncomingDATA[0] & 0x007F) << 4) | (IncomingDATA[1] & 0x00F0);
+    identifier = ((IncomingDATA[0] & 0x007F) << 4) | (IncomingDATA[1] & 0x00F0);
 
     // setting up filter for accepting data
-    if (CANdata -> identifier == 0x0010) {                                              // indicating H2 alarm has been triggered
+    if (identifier == 0x0010) {                                              // indicating H2 alarm has been triggered
         *H2_Alarm = IncomingDATA;
     
-    } else if (CANdata -> identifier == 0x0150) {                                       // ID to get motor voltage and current
-        *mtrV_time = *mtrC_time = timeD;
+    } else if (identifier == 0x0150) {                                       // ID to get motor voltage and current
+        *mtrV_time = timeD;
+        *mtrC_time = timeD;
         *mtr_volt = IncomingDATA[1];
         *mtr_curr = IncomingDATA[0];
     
-    } else if (CANdata -> identifier == 0x0140) {                                       // ID to get fuel cell energy amount left
+    } else if (identifier == 0x0140) {                                       // ID to get fuel cell energy amount left
         *fcE_time = timeD;
         *fc_joules = IncomingDATA[1];
         // dont need Capacitor energy level in IncomingDATA[0];
     
-    } else if (CANdata -> identifier == 0x0170) {                                       // ID to get fuel cell voltage and current
-        *fcV_time = *fcI_time = timeD;
+    } else if (identifier == 0x0170) {                                       // ID to get fuel cell voltage and current
+        *fcV_time = timeD;
+        *fcI_time = timeD;
         *fc_volt = IncomingDATA[1];
         *fc_curr = IncomingDATA[0];
     
-    } else if (CANdata -> identifier == 0x0220) {
+    } else if (identifier == 0x0220) {                                      // ID to get driver side temperature and humidity data
         *drv_temp = IncomingDATA[1];
         *drv_humd = IncomingDATA[0];
     
-    } else if (CANdata -> identifier == 0x0990) {
-        *SpeedVal[0] -> time = timeD;
-        *SpeedVal[0] -> value = IncomingDATA[0];
+    } else if (identifier == 0x0990) {                                      // passing vehicle speed
+        SpeedVal -> time = timeD;
+        SpeedVal -> value = IncomingDATA[0];
     }
     
 }
