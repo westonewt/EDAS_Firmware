@@ -22,7 +22,7 @@ uint32_t driver_temp, driver_humid;
 rData SpeedVal[2], fuelVal[2];
 
 // function to initialize values so calculation can start now
-void initializeSpeedVal(){
+void initializeSpeedVal() {
     SpeedVal[0].time    = 0.0;
     SpeedVal[1].time    = 0.0;
     fuelVal[0].time     = 0.0;
@@ -85,10 +85,10 @@ int main()
                                         SpeedVal[1].time,
                                         fuelVal[0].time,
                                         fuelVal[1].time,
-                                        PreCal_FEff, inst_FEff, data_Fcnt);
+                                        PreCal_FEff, &inst_FEff, data_Fcnt);
     
     Elec_Eff.value = elec_efficiency(   mtr_volt, mtr_curr, fc_volt, fc_curr, fc_joules,
-                                        mtrV_time, time2, PreCal_EEff, instant_EEff, data_Ecnt);
+                                        mtrV_time, fcV_time, PreCal_EEff, &inst_EEff, data_Ecnt);
 
     // Controlling driver fan
     fan_RPM = Fan_Ctrl(driver_temp, driver_humid);
